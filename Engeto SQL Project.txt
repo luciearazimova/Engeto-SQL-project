@@ -3,12 +3,12 @@ Engeto project 'Czechia payroll and Czechia price'
 
 Assignment number 1
 
-- Creating a table with data for comparing food availability based on average incomes over a certain period of time.
+1. Creating a table with data for comparing food availability based on average incomes over a certain period of time.
 
 Solution
 I created a table with documents based on the czechia_payroll and czechia_price datasets. The table displays information on average salaries in selected economic sectors in the years 2000 – 2021 and then average prices of selected food categories in the Czech Republic in the years 2006 – 2018.
 
-- Creation of a table with GDP, GINI coefficient and population of other European countries in the same period as the primary overview for the Czech Republic.
+2. Creation of a table with GDP, GINI coefficient and population of other European countries in the same period as the primary overview for the Czech Republic.
 
 Solution
 The sources listed in the countries and economies datasets are not compatible and it is not possible to create a table from them according to the specification.
@@ -29,14 +29,12 @@ According to the available data, I compared the years 2006 and 2018. The amount 
 Least kilograms of bread and liters of milk could be bought by employees in accommodation and catering. It was 706.43 kg in 2006 and 774.39 kg of bread in 2018 and 788.89 L of milk in 2006 and 947.06 L of milk in 2018. The data shows that the staff has improved over the years.
 
  
+3. Which food category price increases the slowest (has the lowest percentage year-on-year increase)?
 
-3. Which food category is increasing in price the slowest (has the lowest percentage year-on-year increase)?
-
-Crystal sugar rose in price the slowest, which, on the other hand, fell in price by 27.51% between 2006 and 2018.
+Crystal sugar price rose the slowest, which, on the other hand, fell in price by 27.51% between 2006 and 2018.
 
  
-
-4. Has there been a year in which the year-on-year increase in food prices was significantly higher than wage growth (greater than 10%)?
+4. Has there been a year in which the year-on-year increase food prices was significantly higher than wage growth (greater than 10%)?
 
 The data makes it possible to compare the increase between 2007 and 2018, and the results show that the difference in the growth of average prices and wages has never been greater than 10%.
 
@@ -44,3 +42,178 @@ The data makes it possible to compare the increase between 2007 and 2018, and th
 5. Does the level of GDP affect changes in wages and food prices? Or, if the GDP increases more significantly in one year, will this be reflected in food prices or wages in the same or the following year by a more significant increase?
 
 This question cannot be answered. It is not determined what a significant increase in prices means. It would be necessary to determine the percentage difference.
+
+
+-----------SQL part-----------
+
+
+Creating table number one:
+
+CREATE OR REPLACE TABLE t_Lucie_Arazimova_project_SQL_primary_final AS 
+SELECT *
+FROM ( 
+	SELECT 
+		cpa.industry_branch_code ,
+		cpa.payroll_year ,
+		round(AVG(cpa.value)) AS average_payrol_value
+	FROM czechia_payroll cpa
+	WHERE cpa.value_type_code  = 5958 AND cpa.industry_branch_code IS NOT NULL 
+	GROUP BY cpa.industry_branch_code , cpa.payroll_year 
+	) cpay
+LEFT JOIN ( 
+	SELECT 
+		cpr.category_code ,
+		YEAR(cpr.date_from) year,
+		AVG(cpr.value) AS average_price_value
+	FROM czechia_price cpr
+	WHERE cpr.region_code IS NULL
+	GROUP BY cpr.category_code, YEAR(cpr.date_from) 
+	ORDER BY cpr.category_code , cpr.date_from
+	) cpri
+ON cpay.payroll_year = cpri.year 
+LEFT JOIN  ( 
+	SELECT 	cpib.code, 
+		cpib.name AS industry_branch
+	FROM czechia_payroll_industry_branch cpib
+	) cpibr  
+	ON cpay.industry_branch_code = cpibr.code
+;
+
+Solution question number one:
+
+/** 1.1 **/ 
+
+CREATE OR REPLACE VIEW v_Lucie_Arazimova_project_SQL_primary_final AS
+SELECT  
+    DISTINCT tlapspf.payroll_year, 
+     tlapspf.industry_branch, 
+    tlapspf.average_payrol_value, 
+    tlapspf2.average_payrol_value AS ave_payroll_value_previous_year
+FROM t_Lucie_Arazimova_project_SQL_primary_final AS tlapspf
+LEFT JOIN t_Lucie_Arazimova_project_SQL_primary_final  AS tlapspf2
+ON tlapspf.payroll_year = (tlapspf2.payroll_year + 1 ) AND 
+	tlapspf.industry_branch = tlapspf2.industry_branch 
+    GROUP BY tlapspf.industry_branch,	tlapspf.payroll_year
+    ;
+
+SELECT *,
+	CASE 
+		WHEN average_payrol_value > ave_payroll_value_previous_year THEN 0
+		ELSE 1
+	END AS decreasing_payroll
+FROM v_Lucie_Arazimova_project_SQL_primary_final 
+WHERE ave_payroll_value_previous_year IS NOT NULL
+ORDER BY decreasing_payroll DESC, payroll_year 
+;
+
+Solution questin number two:
+
+SELECT  tlapspf.year, cpc.name , 
+	round(average_payrol_value / average_price_value, 2 ) AS amount,
+	cpc.price_unit, 
+	tlapspf.industry_branch
+FROM t_Lucie_Arazimova_project_SQL_primary_final tlapspf
+LEFT JOIN czechia_price_category cpc ON 
+tlapspf.category_code = cpc.code 
+WHERE (category_code = '114201' OR 
+	category_code =  '111301') AND  
+	(year = '2006' OR year = '2018')
+ORDER BY cpc.name , tlapspf.year, amount DESC
+;
+
+Solution question number three:
+
+SELECT 
+	DISTINCT a.category_code,
+	cpc.name, 
+	round((b.average_price_value_2018 / a.average_price_value_2006) * 100 - 100 , 2) AS price_value_difference_percen 
+FROM ( 
+SELECT 
+	tlapspf.payroll_year ,
+	tlapspf.category_code ,
+	tlapspf.average_price_value AS average_price_value_2006
+FROM t_Lucie_Arazimova_project_SQL_primary_final tlapspf
+WHERE category_code IS NOT NULL AND year = 2006
+	) a 
+LEFT JOIN ( 
+	SELECT 
+		tlapspf2.payroll_year,
+		tlapspf2.category_code,
+		tlapspf2.average_price_value AS average_price_value_2018
+	FROM t_Lucie_Arazimova_project_SQL_primary_final tlapspf2
+	WHERE category_code IS NOT NULL AND year = 2018
+	) b 
+ON 	a.category_code = b.category_code
+LEFT JOIN czechia_price_category cpc 
+ON a.category_code = cpc.code
+ORDER BY price_value_difference_percen
+;
+
+
+Solution question number four:
+
+/** 4.1 **/ 
+
+CREATE OR REPLACE VIEW v_Lucie_Arazimova_project_SQL_primary_final_payroll_difference AS
+SELECT *,
+	round((all_industry_branches_aver_payroll_value_next_year / all_industry_branches_aver_payroll_value) * 100 - 100, 2 ) AS perc_difference
+FROM ( 
+	SELECT 
+		DISTINCT tlapspf.payroll_year, 
+		avg(tlapspf.average_payrol_value ) AS all_industry_branches_aver_payroll_value 
+	FROM t_Lucie_Arazimova_project_SQL_primary_final tlapspf
+	GROUP BY year 
+	) a
+LEFT JOIN (
+		SELECT 
+		DISTINCT tlapspf2.payroll_year AS next_payroll_year,
+		avg(tlapspf2.average_payrol_value ) AS all_industry_branches_aver_payroll_value_next_year
+	FROM t_Lucie_Arazimova_project_SQL_primary_final tlapspf2
+	GROUP BY year 
+	) b 
+ON a.payroll_year = (b.next_payroll_year - 1)
+WHERE b.next_payroll_year  IS NOT NULL
+;
+
+
+
+/** 4.2 **/ 
+
+CREATE OR REPLACE VIEW v_Lucie_Arazimova_project_SQL_primary_final_price_difference AS 
+SELECT *,
+	round((average_price_value_of_selected_categories_next_year / average_price_value_of_selected_categories) * 100 - 100, 2) AS perc_price_difference
+FROM ( 
+	SELECT 
+		tlapspf3.year, 
+		avg(tlapspf3.average_price_value) AS average_price_value_of_selected_categories
+	FROM t_Lucie_Arazimova_project_SQL_primary_final tlapspf3
+	WHERE tlapspf3.year IS NOT NULL
+	GROUP BY year 
+	) c
+LEFT JOIN  ( 
+	SELECT 
+		tlapspf4.year AS next_year,
+		avg(tlapspf4.average_price_value) AS average_price_value_of_selected_categories_next_year
+	FROM t_Lucie_Arazimova_project_SQL_primary_final tlapspf4
+	WHERE tlapspf4.year IS NOT NULL
+	GROUP BY year 
+	) d 
+ON c.year = (d.next_year - 1)
+WHERE d.next_year IS NOT NULL 
+;
+
+
+/** 4.3 **/ 
+
+SELECT 
+	perc_price_difference AS perc_price_growth_2007_to_2018, 
+	perc_difference AS perc_payroll_growth_2007_to_2018 , 
+	CASE WHEN perc_price_difference > (perc_difference + 10) THEN 1
+	ELSE 0
+	END AS price_growth_more_than_10_percent
+FROM v_Lucie_Arazimova_project_SQL_primary_final_price_difference 
+LEFT JOIN v_Lucie_Arazimova_project_SQL_primary_final_payroll_difference 
+ON year = payroll_year AND 
+	next_year = next_payroll_year
+	;
+
