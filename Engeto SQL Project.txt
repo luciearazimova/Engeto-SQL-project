@@ -1,7 +1,7 @@
-# Engeto-SQL-project
+Engeto-SQL-project
 Engeto project 'Czechia payroll and Czechia price'
 
-# Assignment number 1
+Assignment number 1
 
 - Creating a table with data for comparing food availability based on average incomes over a certain period of time.
 
