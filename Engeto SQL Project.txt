@@ -53,22 +53,22 @@ CREATE OR REPLACE TABLE t_Lucie_Arazimova_project_SQL_primary_final AS
 SELECT *
 FROM ( 
 	SELECT 
-		cpa.industry_branch_code ,
-		cpa.payroll_year ,
+		cpa.industry_branch_code,
+		cpa.payroll_year,
 		round(AVG(cpa.value)) AS average_payrol_value
 	FROM czechia_payroll cpa
 	WHERE cpa.value_type_code  = 5958 AND cpa.industry_branch_code IS NOT NULL 
-	GROUP BY cpa.industry_branch_code , cpa.payroll_year 
+	GROUP BY cpa.industry_branch_code, cpa.payroll_year 
 	) cpay
 LEFT JOIN ( 
 	SELECT 
-		cpr.category_code ,
+		cpr.category_code,
 		YEAR(cpr.date_from) year,
 		AVG(cpr.value) AS average_price_value
 	FROM czechia_price cpr
 	WHERE cpr.region_code IS NULL
 	GROUP BY cpr.category_code, YEAR(cpr.date_from) 
-	ORDER BY cpr.category_code , cpr.date_from
+	ORDER BY cpr.category_code, cpr.date_from
 	) cpri
 ON cpay.payroll_year = cpri.year 
 LEFT JOIN  ( 
@@ -91,8 +91,8 @@ SELECT
     tlapspf2.average_payrol_value AS ave_payroll_value_previous_year
 FROM t_Lucie_Arazimova_project_SQL_primary_final AS tlapspf
 LEFT JOIN t_Lucie_Arazimova_project_SQL_primary_final  AS tlapspf2
-ON tlapspf.payroll_year = (tlapspf2.payroll_year + 1 ) AND 
-	tlapspf.industry_branch = tlapspf2.industry_branch 
+ON tlapspf.payroll_year = (tlapspf2.payroll_year + 1 ) 
+AND tlapspf.industry_branch = tlapspf2.industry_branch 
     GROUP BY tlapspf.industry_branch,	tlapspf.payroll_year
     ;
 
@@ -108,7 +108,7 @@ ORDER BY decreasing_payroll DESC, payroll_year
 
 Solution questin number two:
 
-SELECT  tlapspf.year, cpc.name , 
+SELECT  tlapspf.year, cpc.name, 
 	round(average_payrol_value / average_price_value, 2 ) AS amount,
 	cpc.price_unit, 
 	tlapspf.industry_branch
@@ -116,8 +116,8 @@ FROM t_Lucie_Arazimova_project_SQL_primary_final tlapspf
 LEFT JOIN czechia_price_category cpc ON 
 tlapspf.category_code = cpc.code 
 WHERE (category_code = '114201' OR 
-	category_code =  '111301') AND  
-	(year = '2006' OR year = '2018')
+	category_code =  '111301') 
+	AND (year = '2006' OR year = '2018')
 ORDER BY cpc.name , tlapspf.year, amount DESC
 ;
 
@@ -129,11 +129,12 @@ SELECT
 	round((b.average_price_value_2018 / a.average_price_value_2006) * 100 - 100 , 2) AS price_value_difference_percen 
 FROM ( 
 SELECT 
-	tlapspf.payroll_year ,
-	tlapspf.category_code ,
+	tlapspf.payroll_year,
+	tlapspf.category_code,
 	tlapspf.average_price_value AS average_price_value_2006
 FROM t_Lucie_Arazimova_project_SQL_primary_final tlapspf
-WHERE category_code IS NOT NULL AND year = 2006
+WHERE category_code IS NOT NULL 
+AND year = 2006
 	) a 
 LEFT JOIN ( 
 	SELECT 
@@ -207,7 +208,7 @@ WHERE d.next_year IS NOT NULL
 
 SELECT 
 	perc_price_difference AS perc_price_growth_2007_to_2018, 
-	perc_difference AS perc_payroll_growth_2007_to_2018 , 
+	perc_difference AS perc_payroll_growth_2007_to_2018, 
 	CASE WHEN perc_price_difference > (perc_difference + 10) THEN 1
 	ELSE 0
 	END AS price_growth_more_than_10_percent
