@@ -63,14 +63,14 @@ FROM (
 LEFT JOIN ( 
 	SELECT 
 		cpr.category_code,
-		YEAR(cpr.date_from) year,
+		YEAR(cpr.date_from) price_value_year,
 		AVG(cpr.value) AS average_price_value
 	FROM czechia_price cpr
 	WHERE cpr.region_code IS NULL
 	GROUP BY cpr.category_code, YEAR(cpr.date_from) 
 	ORDER BY cpr.category_code, cpr.date_from
 	) cpri
-ON cpay.payroll_year = cpri.year 
+ON cpay.payroll_year = cpri.price_value_year 
 LEFT JOIN  ( 
 	SELECT 	cpib.code, 
 		cpib.name AS industry_branch
@@ -111,9 +111,9 @@ ORDER BY decreasing_payroll DESC, payroll_year
 
 Solution questin number two:
 
-/** 2.1 **/ 
+ /** 2.1 **/ 
 
-SELECT  tlapspf.year, cpc.name, 
+SELECT  tlapspf.price_value_year, cpc.name, 
 	round(average_payrol_value / average_price_value, 2 ) AS amount,
 	cpc.price_unit, 
 	tlapspf.industry_branch
@@ -122,8 +122,8 @@ LEFT JOIN czechia_price_category cpc ON
 tlapspf.category_code = cpc.code 
 WHERE (category_code = '114201' OR 
 	category_code =  '111301') 
-	AND (year = '2006' OR year = '2018')
-ORDER BY cpc.name , tlapspf.year, amount DESC
+	AND (price_value_year = '2006' OR price_value_year = '2018')
+ORDER BY cpc.name , tlapspf.price_value_year, amount DESC
 ;
 
 Solution question number three:
@@ -141,7 +141,7 @@ SELECT
 	tlapspf.average_price_value AS average_price_value_2006
 FROM t_Lucie_Arazimova_project_SQL_primary_final tlapspf
 WHERE category_code IS NOT NULL 
-AND year = 2006
+AND price_value_year = 2006
 	) a 
 LEFT JOIN ( 
 	SELECT 
@@ -149,7 +149,7 @@ LEFT JOIN (
 		tlapspf2.category_code,
 		tlapspf2.average_price_value AS average_price_value_2018
 	FROM t_Lucie_Arazimova_project_SQL_primary_final tlapspf2
-	WHERE category_code IS NOT NULL AND year = 2018
+	WHERE category_code IS NOT NULL AND price_value_year = 2018
 	) b 
 ON 	a.category_code = b.category_code
 LEFT JOIN czechia_price_category cpc 
@@ -170,14 +170,14 @@ FROM (
 		DISTINCT tlapspf.payroll_year, 
 		avg(tlapspf.average_payrol_value ) AS all_industry_branches_aver_payroll_value 
 	FROM t_Lucie_Arazimova_project_SQL_primary_final tlapspf
-	GROUP BY year 
+	GROUP BY price_value_year 
 	) a
 LEFT JOIN (
 		SELECT 
 		DISTINCT tlapspf2.payroll_year AS next_payroll_year,
 		avg(tlapspf2.average_payrol_value ) AS all_industry_branches_aver_payroll_value_next_year
 	FROM t_Lucie_Arazimova_project_SQL_primary_final tlapspf2
-	GROUP BY year 
+	GROUP BY price_value_year 
 	) b 
 ON a.payroll_year = (b.next_payroll_year - 1)
 WHERE b.next_payroll_year  IS NOT NULL
@@ -191,21 +191,21 @@ SELECT *,
 	round((average_price_value_of_selected_categories_next_year / average_price_value_of_selected_categories) * 100 - 100, 2) AS perc_price_difference
 FROM ( 
 	SELECT 
-		tlapspf3.year, 
+		tlapspf3.price_value_year, 
 		avg(tlapspf3.average_price_value) AS average_price_value_of_selected_categories
 	FROM t_Lucie_Arazimova_project_SQL_primary_final tlapspf3
-	WHERE tlapspf3.year IS NOT NULL
-	GROUP BY year 
+	WHERE tlapspf3.price_value_year IS NOT NULL
+	GROUP BY price_value_year 
 	) c
 LEFT JOIN  ( 
 	SELECT 
-		tlapspf4.year AS next_year,
+		tlapspf4.price_value_year AS next_year,
 		avg(tlapspf4.average_price_value) AS average_price_value_of_selected_categories_next_year
 	FROM t_Lucie_Arazimova_project_SQL_primary_final tlapspf4
-	WHERE tlapspf4.year IS NOT NULL
-	GROUP BY year 
+	WHERE tlapspf4.price_value_year IS NOT NULL
+	GROUP BY price_value_year 
 	) d 
-ON c.year = (d.next_year - 1)
+ON c.price_value_year = (d.next_year - 1)
 WHERE d.next_year IS NOT NULL 
 ;
 
@@ -220,7 +220,7 @@ SELECT
 	END AS price_growth_more_than_10_percent
 FROM v_Lucie_Arazimova_project_SQL_primary_final_price_difference 
 LEFT JOIN v_Lucie_Arazimova_project_SQL_primary_final_payroll_difference 
-ON year = payroll_year 
+ON price_value_year = payroll_year 
 AND next_year = next_payroll_year
 ;
 
