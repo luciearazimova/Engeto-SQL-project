@@ -93,8 +93,11 @@ FROM t_Lucie_Arazimova_project_SQL_primary_final AS tlapspf
 LEFT JOIN t_Lucie_Arazimova_project_SQL_primary_final  AS tlapspf2
 ON tlapspf.payroll_year = (tlapspf2.payroll_year + 1 ) 
 AND tlapspf.industry_branch = tlapspf2.industry_branch 
-    GROUP BY tlapspf.industry_branch,	tlapspf.payroll_year
+GROUP BY tlapspf.industry_branch,	
+	 tlapspf.payroll_year
     ;
+
+/** 1.2 **/ 
 
 SELECT *,
 	CASE 
@@ -107,6 +110,8 @@ ORDER BY decreasing_payroll DESC, payroll_year
 ;
 
 Solution questin number two:
+
+/** 2.1 **/ 
 
 SELECT  tlapspf.year, cpc.name, 
 	round(average_payrol_value / average_price_value, 2 ) AS amount,
@@ -122,6 +127,8 @@ ORDER BY cpc.name , tlapspf.year, amount DESC
 ;
 
 Solution question number three:
+
+/** 3.1 **/ 
 
 SELECT 
 	DISTINCT a.category_code,
@@ -177,7 +184,6 @@ WHERE b.next_payroll_year  IS NOT NULL
 ;
 
 
-
 /** 4.2 **/ 
 
 CREATE OR REPLACE VIEW v_Lucie_Arazimova_project_SQL_primary_final_price_difference AS 
@@ -214,7 +220,7 @@ SELECT
 	END AS price_growth_more_than_10_percent
 FROM v_Lucie_Arazimova_project_SQL_primary_final_price_difference 
 LEFT JOIN v_Lucie_Arazimova_project_SQL_primary_final_payroll_difference 
-ON year = payroll_year AND 
-	next_year = next_payroll_year
-	;
+ON year = payroll_year 
+AND next_year = next_payroll_year
+;
 
