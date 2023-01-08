@@ -11,7 +11,7 @@ I created a table with documents based on the czechia_payroll and czechia_price 
 2. Creation of a table with GDP, GINI coefficient and population of other European countries in the same period as the primary overview for the Czech Republic.
 
 Solution
-The sources listed in the countries and economies datasets are not compatible and it is not possible to create a table from them according to the specification.
+I created table that shows GDP, gini and population for each country from 2000 to 2020. 
 
 Assignment number 2
 
@@ -77,6 +77,37 @@ LEFT JOIN  (
 	FROM czechia_payroll_industry_branch cpib
 	) cpibr  
 	ON cpay.industry_branch_code = cpibr.code
+;
+
+Creating table number two:
+
+CREATE OR REPLACE VIEW v_Lucie_Arazimova_project_SQL_secondary_final AS 
+SELECT *
+FROM (	
+	SELECT country AS country_c, 
+		region_in_world
+	FROM countries c
+	WHERE region_in_world LIKE '%Europe%'
+	) a 
+LEFT JOIN ( 
+	SELECT country AS country_e,
+		year, 
+		GDP, 
+		population, 
+		gini 
+	FROM economies e
+	) b 
+ON a.country_c = b.country_e
+WHERE b.year >= 2000
+;
+
+CREATE OR REPLACE TABLE t_Lucie_Arazimova_project_SQL_secondary_final AS
+SELECT country_e AS country,
+		year,
+		GDP,
+		gini,
+		population
+FROM v_Lucie_Arazimova_project_SQL_secondary_final
 ;
 
 Solution question number one:
