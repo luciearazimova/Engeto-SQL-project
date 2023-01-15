@@ -63,7 +63,7 @@ FROM (
 LEFT JOIN ( 
 	SELECT 
 		cpr.category_code,
-		YEAR(cpr.date_from) price_value_year,
+		YEAR(cpr.date_from) AS price_value_year,
 		AVG(cpr.value) AS average_price_value
 	FROM czechia_price cpr
 	WHERE cpr.region_code IS NULL
