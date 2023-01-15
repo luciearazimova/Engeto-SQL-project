@@ -255,3 +255,64 @@ ON price_value_year = payroll_year
 AND next_year = next_payroll_year
 ;
 
+Solution question number five:
+
+/** 5.1. **/ 
+
+CREATE or REPLACE VIEW v_Lucie_Arazimova_GDP_Difference AS
+SELECT country,
+	   year AS default_year,
+	   GDP AS default_GDP
+FROM t_Lucie_Arazimova_project_SQL_secondary_final
+WHERE country = 'Czech Republic'
+ORDER BY year 
+;
+
+/** 5.2. **/
+
+CREATE or REPLACE VIEW v_Lucie_Arazimova_GDP_perc_Difference AS
+SELECT *,
+	round((GDP_next_year / default_GDP) * 100 - 100, 2) AS GDP_perc_difference
+FROM v_Lucie_Arazimova_GDP_Difference a
+LEFT JOIN (
+	SELECT b.default_year AS next_year,
+		   b.default_GDP AS GDP_next_year
+	FROM v_Lucie_Arazimova_GDP_Difference b
+	)c
+	ON a.default_year = (c.next_year - 1)
+	ORDER BY a.default_year 
+;
+
+/** 5.3. **/
+
+CREATE or REPLACE VIEW v_Lucie_Arazimova_difference_of_theree_monitored_categories AS
+SELECT a.default_year,
+	   a.default_GDP,
+	   b.average_price_value_of_selected_categories,
+	   c.all_industry_branches_aver_payroll_value, 
+	   a.next_year,
+	   a.GDP_next_year,
+	   b.average_price_value_of_selected_categories_next_year,
+	   c.all_industry_branches_aver_payroll_value_next_year,
+	   a.GDP_perc_difference,
+	   b.perc_price_difference,
+	   c.perc_difference AS perc_industry_branches_aver_payroll_difference   
+FROM v_Lucie_Arazimova_GDP_perc_Difference a
+LEFT JOIN v_Lucie_Arazimova_project_SQL_primary_final_price_difference b
+ON a.default_year = b.price_value_year 
+LEFT JOIN v_Lucie_Arazimova_project_SQL_primary_final_payroll_difference c 
+ON a.default_year = c.payroll_year 
+WHERE b.price_value_year IS NOT NULL 
+;
+
+/** 5.4. **/
+
+SELECT next_year AS monitored_year,
+	   GDP_perc_difference,
+	   perc_price_difference,
+	   perc_industry_branches_aver_payroll_difference,
+	   CASE WHEN GDP_perc_difference > 5 AND perc_price_difference > 5 AND perc_industry_branches_aver_payroll_difference > 5 THEN 1
+	   ELSE 0
+	   END AS GDP_prices_payroll_difference_more_than_five_perc
+FROM v_Lucie_Arazimova_difference_of_theree_monitored_categories
+;
