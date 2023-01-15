@@ -41,7 +41,7 @@ The data makes it possible to compare the increase between 2007 and 2018, and th
 
 5. Does the level of GDP affect changes in wages and food prices? Or, if the GDP increases more significantly in one year, will this be reflected in food prices or wages in the same or the following year by a more significant increase?
 
-This question cannot be answered. It is not determined what a significant increase in prices means. It would be necessary to determine the percentage difference.
+It is possible to show data only for the Czech Republic in the years 2007 to 2018. The result shows that only in the years 2007 and 2017, with an increase in GDP of more than 5%, also prices and salaries increased more than 5%.
 
 
 -----------SQL part-----------
